@@ -4,31 +4,30 @@ from statistics import geometric_mean
 import torch
 from transformers import GPT2LMHeadModel, GPT2TokenizerFast, BertForMaskedLM, BertTokenizerFast, AutoTokenizer, TransfoXLTokenizer, TransfoXLLMHeadModel,T5Tokenizer, T5ForConditionalGeneration,OpenAIGPTLMHeadModel, OpenAIGPTTokenizer, XLNetTokenizer, XLNetLMHeadModel, GPTNeoForCausalLM, AutoTokenizer, GPTJForCausalLM,AutoModelForCausalLM
 from transformers import AutoTokenizer, BloomForCausalLM, OPTForCausalLM, AutoModelForSeq2SeqLM
-from code.data_preprocess.wikidata_get import *
+from src.data_preprocess.gen_obj_alias_clean_dict import judge_obj_in_vocab
+from src.data_preprocess.wikidata_get import *
 import random
 import jsonlines
 import os
-import argparse
+import os.path as osp
 import nltk
 import math
 
 from globs import PROJECT_PATH
-from utils import load_json
+from utils import download_and_unzip, load_json
 try:
     nltk.data.find('stopwords')
 except LookupError:
     nltk.download('stopwords')
 from nltk.corpus import stopwords
 
-# set_start_method('spawn')
-ctx = torch.multiprocessing.get_context("spawn")
 random.seed(1)
 
 
-def data_filter(probing_facts, rel2alias, sub2alias, obj2alias):
+def data_filter(probing_facts, rel2alias, sub2alias, obj2alias, verbose=0):
     filtered_facts = dict()
     print("filtering data")
-    for fact_id in probing_facts.keys():
+    for fact_id in tqdm(probing_facts.keys(), desc='filtered_facts'):
         fact = probing_facts[fact_id]
         sub_id = fact[0]
         rel_id = fact[1]
@@ -37,13 +36,15 @@ def data_filter(probing_facts, rel2alias, sub2alias, obj2alias):
         sub_gold_info = get_entity_defaut_alias(sub_id, sub2alias)
         obj_gold_info = get_entity_defaut_alias(obj_id, obj2alias)
         if sub_gold_info == None or obj_gold_info == None:
-            print("no defaut alias for sub or obj")
+            if verbose:
+                print("no defaut alias for sub or obj")
             continue
         sub_gold = sub_gold_info
         obj_gold = obj_gold_info
         
         if rel_id not in rel2alias.keys():
-            print("no single text rel")
+            if verbose:
+                print("no single text rel")
             continue
         
         rel_gold_list = rel2alias[rel_id]
@@ -350,57 +351,25 @@ def load_model(model_name, device="cuda"):
     model.eval()
     return model, tokenizer
 
-def load_data(model_name_replaced):
-    print("⏰ Loading data....")
-    rootdir = f"{PROJECT_PATH}/data/my_TREx_main_new"
-        
-        
-    all_trex = []
-    list_path = os.listdir(rootdir)
-    for i in range(0, len(list_path)):
-        # Construction path
-        path = os.path.join(rootdir, list_path[i])
-        with jsonlines.open(path) as reader:
-            for obj in reader:
-                all_trex.append(obj)
-    
-    # with open(f"{PROJECT_PATH}/data/symbol2text.json",
-    #             'r') as load_f:
-    #     rel_dict = json.load(load_f)
-    # with open(f"{PROJECT_PATH}/data/cleaned_T_REx/rel2sub_ids.json",
-    #             'r') as load_f:
-    #     rel2sub_ids = json.load(load_f)
-    with open(f"{PROJECT_PATH}/data/cleaned_T_REx/rel2sub2rate.json",
-                'r') as load_f:
-        rel2sub2rate = json.load(load_f)
-    # single_tok_objdict = load_json(f"{PROJECT_PATH}/data/cleaned_T_REx/single_tok_objdict.json")
-    if 'gpt2' in model_name_replaced:
-        vocab_path = f"{PROJECT_PATH}/data/cleaned_T_REx/obj2alias_for_gpt2_vocab.json"
-    elif 't5' in model_name_replaced:
-        vocab_path = f"{PROJECT_PATH}/data/cleaned_T_REx/obj2alias_for_t5-large_vocab.json"
-    elif 'bloom' in model_name_replaced:
-        vocab_path = f"{PROJECT_PATH}/data/cleaned_T_REx/obj2alias_for_bigscience_bloom-560m_vocab.json"
-    elif 'opt' in model_name_replaced:
-        vocab_path = f"{PROJECT_PATH}/data/cleaned_T_REx/obj2alias_for_facebook_opt-125m_vocab.json"
-    elif 'llama' in model_name_replaced or 'alpaca' in model_name_replaced or 'vicuna' in model_name_replaced:
-        vocab_path = f"{PROJECT_PATH}/data/cleaned_T_REx/obj2alias_for_decapoda-research_llama-7b-hf_vocab.json"
-    elif 'glm' in model_name_replaced or "moss" in model_name_replaced:
-        vocab_path = f"{PROJECT_PATH}/data/cleaned_T_REx/obj2alias_for_glm_vocab.json"
-    else: 
-        vocab_path = f"{PROJECT_PATH}/data/cleaned_T_REx/obj2alias_for_{model_name_replaced}_vocab.json"
 
-    obj2alias = load_json(vocab_path)
-    if 'openai-opt' in model_name_replaced:
-        for obj_id in obj2alias.keys():
-            cur_obj_aliases = obj2alias[obj_id]
-            for obj_alias_id in range(len(cur_obj_aliases)):
-                cur_obj_aliases[obj_alias_id] = cur_obj_aliases[obj_alias_id].lower()
-    sub2alias = load_json(f"{PROJECT_PATH}/data/cleaned_T_REx/allsub2alias.json")
-    obj2rel2rate = load_json(f"{PROJECT_PATH}/data/cleaned_T_REx/obj2rel2rate.json")
-    # rel alias filter
-    rel2alias = load_json(f"{PROJECT_PATH}/data/relation2template.json")
-    print("😄 All data loaded.\n")
-    return all_trex, sub2alias, rel2alias, obj2alias, obj2rel2rate, rel2sub2rate
+
+def setup_data_folder() -> None:
+    DATA_URL = "https://zenodo.org/records/13144454/files/data_for_KAssess.zip?download=1"
+    print('Setup KaaR...')
+    # URL of the zip file to download
+    # Ensure the 'data' directory exists
+    data_path = osp.join(PROJECT_PATH, 'data')
+    if not osp.exists(data_path):
+        os.makedirs(data_path)
+    else:
+        print('KaaR setup already DONE!')
+        return 
+
+    # Call the function with the URL
+    download_and_unzip(DATA_URL, data_path, retries=10, backoff_factor=1)
+    print('KaaR setup DONE!')
+
+
 
 def get_kaar(fact_res : dict) -> tuple[float, bool]:
     thresh = 22
@@ -424,7 +393,7 @@ class KaaR:
         self.stopwords = stopwords.words('english')
         self.stopwords.extend(['I', 'J', 'K', 'without'])
         
-        self.all_trex, self.sub2alias, self.rel2alias, self.obj2alias, self.obj2rel2rate, self.rel2sub2rate = load_data(self.model_name_replaced)
+        self.all_trex, self.sub2alias, self.rel2alias, self.obj2alias, self.obj2rel2rate, self.rel2sub2rate = self._load_data()
         
         sample_facts_num = len(self.all_trex) 
         sample_trex_items_ids = random.sample(range(len(self.all_trex)), sample_facts_num)
@@ -465,9 +434,91 @@ class KaaR:
     def compute(self, fact : tuple) -> tuple[float, bool]:
         fact_res = build_fact_res(fact, self.tokenizer, self.model, self.device, self.sub2alias, self.rel2alias, self.obj2alias, self.obj2rel2rate, self.rel2sub2rate)
         return get_kaar(fact_res)
+    
+    def _load_data(self):
+        setup_data_folder()
+        print("⏰ Loading data....")
+        rootdir = f"{PROJECT_PATH}/data/my_TREx_main_new"
+        model_name_replaced = self.model_name_replaced
+            
+        all_trex = []
+        list_path = os.listdir(rootdir)
+        for i in range(0, len(list_path)):
+            # Construction path
+            path = os.path.join(rootdir, list_path[i])
+            with jsonlines.open(path) as reader:
+                for obj in reader:
+                    all_trex.append(obj)
+        
+        # with open(f"{PROJECT_PATH}/data/symbol2text.json",
+        #             'r') as load_f:
+        #     rel_dict = json.load(load_f)
+        # with open(f"{PROJECT_PATH}/data/cleaned_T_REx/rel2sub_ids.json",
+        #             'r') as load_f:
+        #     rel2sub_ids = json.load(load_f)
+        with open(f"{PROJECT_PATH}/data/cleaned_T_REx/rel2sub2rate.json",
+                    'r') as load_f:
+            rel2sub2rate = json.load(load_f)
+        # single_tok_objdict = load_json(f"{PROJECT_PATH}/data/cleaned_T_REx/single_tok_objdict.json")
+        if 'gpt2' in model_name_replaced:
+            vocab_path = f"{PROJECT_PATH}/data/cleaned_T_REx/obj2alias_for_gpt2_vocab.json"
+        elif 't5' in model_name_replaced:
+            vocab_path = f"{PROJECT_PATH}/data/cleaned_T_REx/obj2alias_for_t5-large_vocab.json"
+        elif 'bloom' in model_name_replaced:
+            vocab_path = f"{PROJECT_PATH}/data/cleaned_T_REx/obj2alias_for_bigscience_bloom-560m_vocab.json"
+        elif 'opt' in model_name_replaced:
+            vocab_path = f"{PROJECT_PATH}/data/cleaned_T_REx/obj2alias_for_facebook_opt-125m_vocab.json"
+        elif 'llama' in model_name_replaced or 'alpaca' in model_name_replaced or 'vicuna' in model_name_replaced:
+            vocab_path = f"{PROJECT_PATH}/data/cleaned_T_REx/obj2alias_for_decapoda-research_llama-7b-hf_vocab.json"
+        elif 'glm' in model_name_replaced or "moss" in model_name_replaced:
+            vocab_path = f"{PROJECT_PATH}/data/cleaned_T_REx/obj2alias_for_glm_vocab.json"
+        else: 
+            vocab_path = f"{PROJECT_PATH}/data/cleaned_T_REx/obj2alias_for_{model_name_replaced}_vocab.json"
+        
+        if not os.path.exists(vocab_path):
+            self._generate_alias()
+
+        obj2alias = load_json(vocab_path)
+        if 'openai-opt' in model_name_replaced:
+            for obj_id in obj2alias.keys():
+                cur_obj_aliases = obj2alias[obj_id]
+                for obj_alias_id in range(len(cur_obj_aliases)):
+                    cur_obj_aliases[obj_alias_id] = cur_obj_aliases[obj_alias_id].lower()
+        sub2alias = load_json(f"{PROJECT_PATH}/data/cleaned_T_REx/allsub2alias.json")
+        obj2rel2rate = load_json(f"{PROJECT_PATH}/data/cleaned_T_REx/obj2rel2rate.json")
+        # rel alias filter
+        rel2alias = load_json(f"{PROJECT_PATH}/data/relation2template.json")
+        print("😄 All data loaded.\n")
+        return all_trex, sub2alias, rel2alias, obj2alias, obj2rel2rate, rel2sub2rate
+    
+    def _generate_alias(self, verbose=0) -> None:
+        save_path = f"{PROJECT_PATH}/data/cleaned_T_REx/obj2alias_for_{self.model_name_replaced}_vocab.json"
+        if osp.exists(save_path):
+            print('Aliases already generated for %s!' % self.model_name)
+
+        with open(f"{PROJECT_PATH}/data/cleaned_T_REx/allobj2alias.json",'r') as load_f:
+            obj2alias = json.load(load_f)
+            
+        save_dict = {}
+        valid_obj_num = 0
+        for obj_id in tqdm(obj2alias.keys(), desc='Alias Gen. %s' % self.model_name):
+            origial_aliases = obj2alias[obj_id]
+            save_dict[obj_id] = []
+            for alias in origial_aliases:
+                if alias == None:
+                    continue
+                input_ids = self.tokenizer(alias, return_tensors='pt').to(device).input_ids[0]
+                if judge_obj_in_vocab(self.tokenizer, alias, input_ids, verbose):
+                    save_dict[obj_id].append(alias)
+                    valid_obj_num += 1
+                elif verbose:
+                    print(f"alias: {alias}, judge: {judge_obj_in_vocab(self.tokenizer, alias, input_ids)}")
+        with open(save_path, 'w') as write_f:
+            json.dump(save_dict, write_f, indent=4, ensure_ascii=False)
+        print("Number of aliases per object =", valid_obj_num / len(save_dict.keys()))
 
 if __name__ == '__main__':
-    model_name = 'gpt2-xl'
+    model_name = 'gpt2'
     device = 'cuda'
     kaar = KaaR(model_name, device)
 
@@ -475,5 +526,5 @@ if __name__ == '__main__':
     fact = ('Q142', 'P36', 'Q90')
 
     kaar, does_know = kaar.compute(fact)
-    print('Fact %s' % fact)
+    print('Fact %s' % str(fact))
     print('KaaR = %s, does_know = %s' % (kaar, does_know))

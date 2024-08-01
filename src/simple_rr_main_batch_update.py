@@ -1,8 +1,8 @@
 import torch
-from transformers import GPT2LMHeadModel, GPT2TokenizerFast, BertForMaskedLM, BertTokenizerFast, RobertaForMaskedLM, RobertaTokenizerFast, AutoTokenizer, AutoModelForMaskedLM, TransfoXLTokenizer, TransfoXLLMHeadModel,T5Tokenizer, T5ForConditionalGeneration,OpenAIGPTLMHeadModel, OpenAIGPTTokenizer, TransfoXLConfig, XLNetTokenizer, XLNetLMHeadModel, GPTNeoForCausalLM, AutoTokenizer, GPTJForCausalLM,AutoModelForCausalLM
-from transformers import BloomConfig, BloomModel
-from transformers import AutoTokenizer, BloomModel, BloomForCausalLM, OPTConfig, OPTModel, OPTForCausalLM,AutoModelForSeq2SeqLM
-from code.data_preprocess.wikidata_get import *
+from transformers import GPT2LMHeadModel, GPT2TokenizerFast, BertForMaskedLM, BertTokenizerFast, AutoTokenizer, TransfoXLTokenizer, TransfoXLLMHeadModel,T5Tokenizer, T5ForConditionalGeneration,OpenAIGPTLMHeadModel, OpenAIGPTTokenizer, XLNetTokenizer, XLNetLMHeadModel, GPTNeoForCausalLM, AutoTokenizer, GPTJForCausalLM,AutoModelForCausalLM
+from transformers import BloomConfig
+from transformers import AutoTokenizer, BloomForCausalLM, OPTForCausalLM,AutoModelForSeq2SeqLM
+from src.data_preprocess.wikidata_get import *
 import random
 from tqdm import tqdm
 import jsonlines

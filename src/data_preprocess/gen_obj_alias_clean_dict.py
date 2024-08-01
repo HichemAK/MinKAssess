@@ -11,7 +11,7 @@ from transformers import AutoTokenizer, BloomModel, BloomForCausalLM, OPTModel, 
 
 from globs import PROJECT_PATH
 
-def judge_obj_in_vocab(tokenizer, obj_label, obj_ids):
+def judge_obj_in_vocab(tokenizer, obj_label, obj_ids, verbose=0):
 
     if isinstance(tokenizer, GPT2TokenizerFast):
         reconstructed_word = "".join(
@@ -33,9 +33,10 @@ def judge_obj_in_vocab(tokenizer, obj_label, obj_ids):
         reconstructed_word = "".join(tokenizer.convert_ids_to_tokens(obj_ids)).replace('Ġ', ' ').strip()
     if isinstance(tokenizer, OpenAIGPTTokenizer) or isinstance(tokenizer, GPT2Tokenizer): 
         if (not reconstructed_word) or (reconstructed_word.lower().replace(' ','') != obj_label.lower().replace(' ','')):
-            print("\tEXCLUDED object label {} not in model vocabulary\n".format(
-                obj_ids
-            ))
+            if verbose:
+                print("\tEXCLUDED object label {} not in model vocabulary\n".format(
+                    obj_ids
+                ))
             return False
         return True
     else: 
