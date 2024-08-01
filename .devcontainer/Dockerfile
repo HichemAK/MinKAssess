@@ -42,5 +42,4 @@ SHELL ["conda", "run", "-n", "KAssess", "/bin/bash", "-c"]
 # Make sure the environment is activated:
 ENV PATH /opt/conda/envs/KAssess/bin:$PATH
 
-# The code to run when container is started:
-ENTRYPOINT ["conda", "run", "--no-capture-output", "-n", "KAssess", "python", "app.py"]
+RUN conda init bash

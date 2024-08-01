@@ -1,7 +1,8 @@
 {
     "name": "KAssess",
     "build": {
-        "dockerfile" : ".devcontainer/Dockerfile",
+        "dockerfile" : "Dockerfile",
+        "context": "../",
         "args": {
             "USER_ID": "${localEnv:UID}",
             "GROUP_ID": "${localEnv:GID}"
@@ -17,7 +18,6 @@
             }
         }
     },
-    "forwardPorts": [5000],
-    "postCreateCommand": "conda activate KAssess",
-    "remoteUser": "user"
+    "postCreateCommand": "conda activate KAssess"
+    // "remoteUser": "user"
 }
