@@ -40,9 +40,10 @@ def judge_obj_in_vocab(tokenizer, obj_label, obj_ids, verbose=0):
         return True
     else: 
         if (not reconstructed_word) or (reconstructed_word != obj_label):
-            print("\tEXCLUDED object label {} not in model vocabulary\n".format(
-                obj_ids
-            ))
+            if verbose:
+                print("\tEXCLUDED object label {} not in model vocabulary\n".format(
+                    obj_ids
+                ))
             return False
         return True
 
