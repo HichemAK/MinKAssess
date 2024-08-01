@@ -17,7 +17,7 @@ conda init bash
 conda activate KAssess
 ```
 
-Here is a simple example of how to quantify the knowledge of a fact by an LLM using KaaR
+Here is a simple example of **how to quantify the knowledge of a fact by an LLM using KaaR**
 ```python
 from kaar import KaaR
 
