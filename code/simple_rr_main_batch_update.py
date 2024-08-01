@@ -1,37 +1,23 @@
-from dis import Instruction
 import torch
 from transformers import GPT2LMHeadModel, GPT2TokenizerFast, BertForMaskedLM, BertTokenizerFast, RobertaForMaskedLM, RobertaTokenizerFast, AutoTokenizer, AutoModelForMaskedLM, TransfoXLTokenizer, TransfoXLLMHeadModel,T5Tokenizer, T5ForConditionalGeneration,OpenAIGPTLMHeadModel, OpenAIGPTTokenizer, TransfoXLConfig, XLNetTokenizer, XLNetLMHeadModel, GPTNeoForCausalLM, AutoTokenizer, GPTJForCausalLM,AutoModelForCausalLM
 from transformers import BloomConfig, BloomModel
 from transformers import AutoTokenizer, BloomModel, BloomForCausalLM, OPTConfig, OPTModel, OPTForCausalLM,AutoModelForSeq2SeqLM
-# from databaseconnection import *
-from wikidata_get import *
+from code.data_preprocess.wikidata_get import *
 import random
-from statistics import mean
 from tqdm import tqdm
-from sklearn import preprocessing
-from transformers import pipeline, set_seed
 import jsonlines
 import os
-import sys
-import requests
-from torch.distributions.categorical import Categorical
-sys.path.append('YOUR_PROJECT_PATH')
-# from LAMA.lama.eval_generation_my import *
-# from single_token_lama import *
 import argparse
-# queryInstance = WikidataQueryController()
-# queryInstance.init_database_connection()
-# parser = options.get_eval_generation_parser()
-# args = options.parse_args(parser)
 import nltk
 import math
+
+from globs import PROJECT_PATH
+from utils import load_json
+try:
+    nltk.data.find('stopwords')
+except LookupError:
+    nltk.download('stopwords')
 from nltk.corpus import stopwords
-from multiprocessing.util import Finalize
-from torch.multiprocessing import Pool
-from torch.multiprocessing import Process, set_start_method
-import multiprocessing
-from multiprocessing import  Process
-# from transformers import LlamaForCausalLM, LlamaTokenizer
 
 # set_start_method('spawn')
 ctx = torch.multiprocessing.get_context("spawn")
@@ -334,9 +320,9 @@ def fun1(exp_mode, facts, index, size, tokenizer, model, device, sub2alias, rel2
 
         # save each 200 samples
         if len(save_dict.keys()) % 200 == 0:
-            with open(f"YOUR_PROJECT_PATHscores/multiprocess_main_{exp_mode}_{model_name_replaced}_{max_samples}_orig.json", 'w') as write_f:
+            with open(f"{PROJECT_PATH}/scores/multiprocess_main_{exp_mode}_{model_name_replaced}_{max_samples}_orig.json", 'w') as write_f:
                 json.dump(save_dict, write_f, indent=4, ensure_ascii=False)
-    with open(f"YOUR_PROJECT_PATHscores/multiprocess_main_{exp_mode}_{model_name_replaced}_{max_samples}_orig.json", 'w') as write_f:
+    with open(f"{PROJECT_PATH}/scores/multiprocess_main_{exp_mode}_{model_name_replaced}_{max_samples}_orig.json", 'w') as write_f:
         json.dump(save_dict, write_f, indent=4, ensure_ascii=False)
     return save_dict
 
@@ -350,18 +336,9 @@ if __name__ == '__main__':
     
     main_parser.add_argument('--model_name', type=str, default="gpt2", help='which model')
     main_args = main_parser.parse_args()
-    # model_name = 'google/flan-t5-xl'
-    # model_name = 'txl'
-    # model_name = 'google/flan-t5-small'
-    # model_name = 'xlnet-large-cased'
-    # model_name = 'EleutherAI/gpt-j-6B'
-    # 'EleutherAI/gpt-neo-125M','EleutherAI/gpt-neo-2.7B'
-    # bigscience/bloom-1b1'facebook/opt-125m
     model_name = main_args.model_name
     model_name_replaced = model_name.replace('/', '_')
-    # exp_mode = 'bs_sub_rel_false'
     exp_mode = 'bs_sub_rel_main' # txl or openai error stop flan-xl
-    # model_name = 'openai-gpt'
     max_samples = 30 # 10, 20, 30, 40, 50
     all_save_dict = dict()
     if 'gpt2' in model_name:
@@ -369,18 +346,13 @@ if __name__ == '__main__':
         tokenizer = GPT2TokenizerFast.from_pretrained(model_name)
     elif 'bloom' in model_name:
         configuration = BloomConfig()
-        # model = BloomForCausalLM(configuration)
-        # configuration = model.config
         tokenizer = AutoTokenizer.from_pretrained(model_name)
         model = BloomForCausalLM.from_pretrained(model_name).to(device)
     elif 'opt' in model_name:
-
-        # model = BloomForCausalLM(configuration)
-        # configuration = model.config
         tokenizer = AutoTokenizer.from_pretrained(model_name)
         model = OPTForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16, device_map="auto", low_cpu_mem_usage=True)
     elif 'llama' in model_name and 'alpaca' not in model_name:
-        from transformers import LlamaForCausalLM, LlamaTokenizer
+        from transformers import LlamaForCausalLM
         if '65B' or '30B' or '7B' in model_name:
             tokenizer = AutoTokenizer.from_pretrained("YOUR_MODEL_PATH/pretrained_models/LLAMA-hf/{}".format(model_name.split('-')[-1]), use_fast=False)
             model = LlamaForCausalLM.from_pretrained("YOUR_MODEL_PATH/pretrained_models/LLAMA-hf/{}".format(model_name.split('-')[-1]), torch_dtype=torch.float16, device_map="auto", low_cpu_mem_usage=True)
@@ -388,14 +360,14 @@ if __name__ == '__main__':
             tokenizer = AutoTokenizer.from_pretrained("YOUR_MODEL_PATH/pretrained_models/LLAMA-hf/{}".format(model_name.split('-')[-1]), use_fast=False)
             model = LlamaForCausalLM.from_pretrained("YOUR_MODEL_PATH/pretrained_models/LLAMA-hf/{}".format(model_name.split('-')[-1]), torch_dtype=torch.float16, low_cpu_mem_usage=True).to(device)
     elif 'alpaca' in model_name:
-        from transformers import LlamaForCausalLM, LlamaTokenizer
+        from transformers import LlamaForCausalLM
         tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=False)
         model = LlamaForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16, low_cpu_mem_usage=True).to(device)
     elif 'vicuna' in model_name:
-        from transformers import LlamaForCausalLM, LlamaTokenizer
+        from transformers import LlamaForCausalLM
         if '7b' or '13b' in model_name:
-            tokenizer = AutoTokenizer.from_pretrained("YOUR_PROJECT_PATHpretrained_models/{}".format(model_name), use_fast=False)
-            model = LlamaForCausalLM.from_pretrained("YOUR_PROJECT_PATHpretrained_models/{}".format(model_name), torch_dtype=torch.float16, device_map="auto", low_cpu_mem_usage=True)
+            tokenizer = AutoTokenizer.from_pretrained("{}pretrained_models/{}".format(PROJECT_PATH, model_name), use_fast=False)
+            model = LlamaForCausalLM.from_pretrained("{}pretrained_models/{}".format(PROJECT_PATH, model_name), torch_dtype=torch.float16, device_map="auto", low_cpu_mem_usage=True)
     elif 'glm' in model_name:
         tokenizer = AutoTokenizer.from_pretrained("THUDM/glm-10b", trust_remote_code=True)
         model =  AutoModelForSeq2SeqLM.from_pretrained("THUDM/glm-10b", trust_remote_code=True).to(device)
@@ -434,87 +406,64 @@ if __name__ == '__main__':
     stopwords_ids = [tokenizer.encode(' '+ stopword)[0] for stopword in stopwords]
     
     print("⏰ Loading data....")
-    with open("YOUR_PROJECT_PATHdata/cleaned_T_REx/sub2example_ids.json",'r') as load_f:
-        sub2example_ids = json.load(load_f)
-    with open("YOUR_PROJECT_PATHdata/cleaned_T_REx/obj2example_ids.json",'r') as load_f:
-        obj2example_ids = json.load(load_f)
-    with open("YOUR_PROJECT_PATHdata/cleaned_T_REx/relation2example_ids.json",'r') as load_f:
-        rel2example_ids = json.load(load_f)
+    sub2example_ids = load_json(f"{PROJECT_PATH}/data/cleaned_T_REx/sub2example_ids.json")
+    obj2example_ids = load_json(f"{PROJECT_PATH}/data/cleaned_T_REx/obj2example_ids.json")
+    rel2example_ids = load_json(f"{PROJECT_PATH}/data/cleaned_T_REx/relation2example_ids.json")
     
     if 'false' not in exp_mode and 'para' not in exp_mode and 'orig' not in exp_mode and 'freq' not in exp_mode and 'main' not in exp_mode and 'human' not in exp_mode:
-        with open("YOUR_PROJECT_PATHdata/cleaned_T_REx/example_1000test.json",'r') as load_f:
-            all_trex = json.load(load_f)
+        all_trex = load_json(f"{PROJECT_PATH}/data/cleaned_T_REx/example_1000test.json")
     else:
-        if 'freq' in exp_mode:
-            rootdir = "YOUR_PROJECT_PATH/data/my_TREx_freq"
-        elif 'false_p' in exp_mode:
-            rootdir = "YOUR_PROJECT_PATH/data/my_TREx_false_p"
-        elif 'para' in exp_mode:
-            rootdir = "YOUR_PROJECT_PATH/data/my_TREx_para"
-        elif 'orig' in exp_mode:
-            rootdir = "YOUR_PROJECT_PATH/data/my_TREx"
-        elif 'human_v1' in exp_mode:
-            rootdir = "YOUR_PROJECT_PATH/data/my_TREx_human_v1"
-        elif 'human_v2' in exp_mode:
-            rootdir = "YOUR_PROJECT_PATH/data/my_TREx_human_v2"
-        elif 'false' in exp_mode:
-            rootdir = "YOUR_PROJECT_PATH/data/my_TREx_false"
-        elif 'main' in exp_mode:
-            rootdir = "YOUR_PROJECT_PATH/data/my_TREx_main_new"
+        exp_mode = 'bs_sub_rel_main' # txl or openai error stop flan-xl
+        rootdir = f"{PROJECT_PATH}/data/my_TREx_main_new"
+            
             
         all_trex = []
         list_path = os.listdir(rootdir)
         for i in range(0, len(list_path)):
-            # 构造路径
+            # Construction path
             path = os.path.join(rootdir, list_path[i])
             with jsonlines.open(path) as reader:
                 for obj in reader:
                     all_trex.append(obj)
     
-    with open("YOUR_PROJECT_PATHdata/symbol2text.json",
+    with open(f"{PROJECT_PATH}/data/symbol2text.json",
                 'r') as load_f:
         rel_dict = json.load(load_f)
-    with open("YOUR_PROJECT_PATHdata/cleaned_T_REx/rel2sub_ids.json",
+    with open(f"{PROJECT_PATH}/data/cleaned_T_REx/rel2sub_ids.json",
                 'r') as load_f:
         rel2sub_ids = json.load(load_f)
-    with open("YOUR_PROJECT_PATHdata/cleaned_T_REx/rel2sub2rate.json",
+    with open(f"{PROJECT_PATH}/data/cleaned_T_REx/rel2sub2rate.json",
                 'r') as load_f:
         rel2sub2rate = json.load(load_f)
-    with open("YOUR_PROJECT_PATHdata/cleaned_T_REx/single_tok_objdict.json",'r') as load_f:
-        single_tok_objdict = json.load(load_f)
+    single_tok_objdict = load_json(f"{PROJECT_PATH}/data/cleaned_T_REx/single_tok_objdict.json")
     if 'gpt2' in model_name_replaced:
-        vocab_path = f"YOUR_PROJECT_PATHdata/cleaned_T_REx/obj2alias_for_gpt2_vocab.json"
+        vocab_path = f"{PROJECT_PATH}/data/cleaned_T_REx/obj2alias_for_gpt2_vocab.json"
     elif 't5' in model_name_replaced:
-        vocab_path = f"YOUR_PROJECT_PATHdata/cleaned_T_REx/obj2alias_for_t5-large_vocab.json"
+        vocab_path = f"{PROJECT_PATH}/data/cleaned_T_REx/obj2alias_for_t5-large_vocab.json"
     elif 'bloom' in model_name_replaced:
-        vocab_path = f"YOUR_PROJECT_PATHdata/cleaned_T_REx/obj2alias_for_bigscience_bloom-560m_vocab.json"
+        vocab_path = f"{PROJECT_PATH}/data/cleaned_T_REx/obj2alias_for_bigscience_bloom-560m_vocab.json"
     elif 'opt' in model_name_replaced:
-        vocab_path = f"YOUR_PROJECT_PATHdata/cleaned_T_REx/obj2alias_for_facebook_opt-125m_vocab.json"
+        vocab_path = f"{PROJECT_PATH}/data/cleaned_T_REx/obj2alias_for_facebook_opt-125m_vocab.json"
     elif 'llama' in model_name_replaced or 'alpaca' in model_name_replaced or 'vicuna' in model_name_replaced:
-        vocab_path = f"YOUR_PROJECT_PATHdata/cleaned_T_REx/obj2alias_for_decapoda-research_llama-7b-hf_vocab.json"
+        vocab_path = f"{PROJECT_PATH}/data/cleaned_T_REx/obj2alias_for_decapoda-research_llama-7b-hf_vocab.json"
     elif 'glm' in model_name_replaced or "moss" in model_name_replaced:
-        vocab_path = f"YOUR_PROJECT_PATHdata/cleaned_T_REx/obj2alias_for_glm_vocab.json"
+        vocab_path = f"{PROJECT_PATH}/data/cleaned_T_REx/obj2alias_for_glm_vocab.json"
     else: 
-        vocab_path = f"YOUR_PROJECT_PATHdata/cleaned_T_REx/obj2alias_for_{model_name_replaced}_vocab.json"
+        vocab_path = f"{PROJECT_PATH}/data/cleaned_T_REx/obj2alias_for_{model_name_replaced}_vocab.json"
 
-    with open(vocab_path,'r') as load_f:
-        obj2alias = json.load(load_f)
-        if 'openai-opt' in model_name:
-            for obj_id in obj2alias.keys():
-                cur_obj_aliases = obj2alias[obj_id]
-                for obj_alias_id in range(len(cur_obj_aliases)):
-                    cur_obj_aliases[obj_alias_id] = cur_obj_aliases[obj_alias_id].lower()
-    with open("YOUR_PROJECT_PATHdata/cleaned_T_REx/allsub2alias.json",'r') as load_f:
-        sub2alias = json.load(load_f)
-    with open("YOUR_PROJECT_PATHdata/cleaned_T_REx/obj2rel2rate.json",'r') as load_f:
-        obj2rel2rate = json.load(load_f)
+    obj2alias = load_json(vocab_path)
+    if 'openai-opt' in model_name:
+        for obj_id in obj2alias.keys():
+            cur_obj_aliases = obj2alias[obj_id]
+            for obj_alias_id in range(len(cur_obj_aliases)):
+                cur_obj_aliases[obj_alias_id] = cur_obj_aliases[obj_alias_id].lower()
+    sub2alias = load_json(f"{PROJECT_PATH}/data/cleaned_T_REx/allsub2alias.json")
+    obj2rel2rate = load_json(f"{PROJECT_PATH}/data/cleaned_T_REx/obj2rel2rate.json")
     print("😄 All data loaded.\n")
     
 
     # rel alias filter
-    with open("YOUR_PROJECT_PATHrelation2template.json",
-                'r') as load_f:
-        rel2alias = json.load(load_f)
+    rel2alias = load_json(f"{PROJECT_PATH}/data/relation2template.json")
     
 
         
@@ -525,7 +474,7 @@ if __name__ == '__main__':
         if para_name == 'a':
             para_name = ''
         if para_name != '':
-            with jsonlines.open(f'YOUR_PROJECT_PATH/data/relations{para_name}.jsonl', 'r') as reader:
+            with jsonlines.open(f'{PROJECT_PATH}/data/relations{para_name}.jsonl', 'r') as reader:
                 for line in reader:
                     line_rel =  line["relation"]
                     # randomly replace one alias in rel2alias[line_rel] by line["template"] 
@@ -535,7 +484,6 @@ if __name__ == '__main__':
                     alias_list.append(line["template"])
                     rel2alias[line_rel] = alias_list
                 
-    # sample_facts_num = 10
     sample_facts_num = len(all_trex) 
     sample_trex_items_ids = random.sample(range(len(all_trex)), sample_facts_num)
     sample_trex_items = dict()
@@ -543,10 +491,6 @@ if __name__ == '__main__':
         if len(sample_trex_items.keys()) > sample_facts_num:
             break
         
-        # if 'fact_id' not in all_trex[sample_id].keys():
-        #     all_trex[sample_id]['fact_id'] = sample_id
-        #     fact_id = sample_id
-        # else:
         fact_id = all_trex[sample_id]['fact_id']
         item = all_trex[sample_id]
         if 'sub_label' in item.keys():
@@ -566,7 +510,6 @@ if __name__ == '__main__':
 
     filtered_facts, sub2alias, obj2alias = data_filter(sample_trex_items, rel2alias, sub2alias, obj2alias, exp_mode)
     for rel in rel2alias:
-        # if more than 4 alias, sample 4 alias randomly
         if len(rel2alias[rel]) > 0:
             rel2alias[rel] = random.sample(rel2alias[rel], min(4, len(rel2alias[rel])))
     for sub in sub2alias:
@@ -578,38 +521,3 @@ if __name__ == '__main__':
             
     print(f"😄 {len(filtered_facts.keys())} facts are retained after filtering.\n")
     results_dict = fun1(exp_mode, filtered_facts, 0, 1, tokenizer, model, device, sub2alias, rel2alias, obj2alias, obj2rel2rate, rel2sub2rate, max_samples)
-    # process_list = []
-    # num_process = 4
-    # p = ctx.Pool(num_process)
-    
-    # for i in range(num_process):
-    #     cur_facts = dict()
-    #     for fact_id in filtered_facts.keys():
-    #         if int(fact_id) % num_process == i:
-    #             cur_facts[fact_id] = filtered_facts[fact_id]
-
-    #     process_list.append(p.apply_async(fun1, args=(exp_mode, cur_facts, i, num_process,tokenizer, model, device, sub2alias, rel2alias, obj2alias, obj2rel2rate, rel2sub2rate, max_samples)))
-        # p = Process(target=fun1,args=(facts)) 
-        # p.start()
-        # process_list.append(p)
-        
-    # p.close()
-    # p.join()
-    # for i in process_list:
-    #     i_save_dict = i.get()
-
-
-    print('done')
-
-        
-    # all_save_dict_by_rel = dict()
-    # for fact_id in all_save_dict.keys():
-    #     cur_rel = all_save_dict[fact_id]['rel_id']
-    #     cur_label = all_save_dict[fact_id]['birr']
-    #     if cur_rel not in all_save_dict_by_rel.keys():
-    #         all_save_dict_by_rel[cur_rel] = []
-    #     all_save_dict_by_rel[cur_rel].append(cur_label)
-    
-    # for rel in all_save_dict_by_rel.keys():
-    #     print(f"{rel}: {mean(all_save_dict_by_rel[rel])}, the valiad facts num is {len(all_save_dict_by_rel[rel])}")
-    
