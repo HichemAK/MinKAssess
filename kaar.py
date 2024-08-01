@@ -365,8 +365,7 @@ def setup_data_folder() -> None:
 
 
 
-def get_kaar(fact_res : dict) -> tuple[float, bool]:
-    thresh = 22
+def get_kaar(fact_res : dict, thresh : int) -> tuple[float, bool]:
     # I need load_dict
     rr_sub_result = fact_res["rr_bs_sub_result"]
     rr_rel_result = fact_res["rr_bs_rel_result"]
@@ -379,13 +378,14 @@ def get_kaar(fact_res : dict) -> tuple[float, bool]:
     return cur_birr, does_know
 
 class KaaR:
-    def __init__(self, model_name : str, device = 'cuda') -> None:
+    def __init__(self, model_name : str, device = 'cuda', thresh=22) -> None:
         self.model_name = model_name
         self.model, self.tokenizer = load_model(model_name, device)
         self.device = device
         self.model_name_replaced = model_name.replace('/', '_')
         self.stopwords = stopwords.words('english')
         self.stopwords.extend(['I', 'J', 'K', 'without'])
+        self.thresh = thresh
         
         self.all_trex, self.sub2alias, self.rel2alias, self.obj2alias, self.obj2rel2rate, self.rel2sub2rate = self._load_data()
         
@@ -427,7 +427,7 @@ class KaaR:
 
     def compute(self, fact : tuple) -> tuple[float, bool]:
         fact_res = build_fact_res(fact, self.tokenizer, self.model, self.device, self.sub2alias, self.rel2alias, self.obj2alias, self.obj2rel2rate, self.rel2sub2rate)
-        return get_kaar(fact_res)
+        return get_kaar(fact_res, self.thresh)
     
     def _load_data(self):
         setup_data_folder()
