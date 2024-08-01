@@ -39,6 +39,13 @@ print('According to KaaR, does the model knows this fact? Answer: %s' % ans)
 # According to KaaR, does the model knows this fact? Answer: No
 ```
 
+## Difference with original repo
+
+- Easy-to-use
+- Clean code
+- Minimalistic implementation: I kept only the portion of the code needed to compute KaaR and removed the rest
+- This implementation can compute KaaR on a single fact (the original implementation went through all facts)
+
 ## Citation
 Cite the original authors using:
 ```
