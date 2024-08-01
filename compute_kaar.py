@@ -1,15 +1,11 @@
 import json
 from statistics import geometric_mean
-import numpy as np
-import pandas as pd
 
 import torch
-from transformers import GPT2LMHeadModel, GPT2TokenizerFast, BertForMaskedLM, BertTokenizerFast, RobertaForMaskedLM, RobertaTokenizerFast, AutoTokenizer, AutoModelForMaskedLM, TransfoXLTokenizer, TransfoXLLMHeadModel,T5Tokenizer, T5ForConditionalGeneration,OpenAIGPTLMHeadModel, OpenAIGPTTokenizer, TransfoXLConfig, XLNetTokenizer, XLNetLMHeadModel, GPTNeoForCausalLM, AutoTokenizer, GPTJForCausalLM,AutoModelForCausalLM
-from transformers import BloomConfig, BloomModel
-from transformers import AutoTokenizer, BloomModel, BloomForCausalLM, OPTConfig, OPTModel, OPTForCausalLM,AutoModelForSeq2SeqLM
+from transformers import GPT2LMHeadModel, GPT2TokenizerFast, BertForMaskedLM, BertTokenizerFast, AutoTokenizer, TransfoXLTokenizer, TransfoXLLMHeadModel,T5Tokenizer, T5ForConditionalGeneration,OpenAIGPTLMHeadModel, OpenAIGPTTokenizer, XLNetTokenizer, XLNetLMHeadModel, GPTNeoForCausalLM, AutoTokenizer, GPTJForCausalLM,AutoModelForCausalLM
+from transformers import AutoTokenizer, BloomForCausalLM, OPTForCausalLM, AutoModelForSeq2SeqLM
 from code.data_preprocess.wikidata_get import *
 import random
-from tqdm import tqdm
 import jsonlines
 import os
 import argparse
@@ -29,7 +25,7 @@ ctx = torch.multiprocessing.get_context("spawn")
 random.seed(1)
 
 
-def data_filter(probing_facts, rel2alias, sub2alias, obj2alias, exp_mode):
+def data_filter(probing_facts, rel2alias, sub2alias, obj2alias):
     filtered_facts = dict()
     print("filtering data")
     for fact_id in probing_facts.keys():
@@ -112,7 +108,7 @@ def sentence_prob(sentence,  tokenizer, model, device):
     return prob
 
 
-def rr_bs_sub_replace(tokenizer, model, device, sub_id, rel_id, obj_id, sub_gold, rel_gold_list, obj_gold, sub2alias, rel2alias, obj2alias, obj2rel2rate, rel2sub2rate,  max_samples):
+def rr_bs_sub_replace(tokenizer, model, device, sub_id, rel_id, obj_id, sub2alias, rel2alias, obj2alias, rel2sub2rate):
     '''
     Given rel sub replacement
     score = 
@@ -122,7 +118,6 @@ def rr_bs_sub_replace(tokenizer, model, device, sub_id, rel_id, obj_id, sub_gold
     betas = []
     beta_temps = []
     gammas = []
-    all_r_gammas = dict() # objs可以作为哪些rel的objs,同时sub也可以作为哪些rel的subs -> objs可以作为哪些sub的objs,同时rel也可以作为哪些sub的rels
     alphas = sub2alias[sub_id]
     for r_alias in rel2alias[rel_id]:
         r_alias = r_alias.strip('.').strip()
@@ -168,8 +163,7 @@ def rr_bs_sub_replace(tokenizer, model, device, sub_id, rel_id, obj_id, sub_gold
         
         p_denominator = 0
         subids_list = [other_sub_id for other_sub_id in rel2sub2rate[rel_id].keys()] 
-        probs_list = [rel2sub2rate[rel_id][i] for i in subids_list]
-        Q_weights = torch.Tensor(probs_list)
+        # Q_weights = torch.Tensor(probs_list)
         sample_k = 4
         # Q_sampled_sub_idxes = torch.multinomial(Q_weights, min(len(probs_list),sample_k))
         Q_sampled_sub_idxes = random.sample(range(len(subids_list)), min(sample_k, len(subids_list)))
@@ -180,9 +174,9 @@ def rr_bs_sub_replace(tokenizer, model, device, sub_id, rel_id, obj_id, sub_gold
                     if alpha == None or beta_temp == None:
                         continue
                     p_beta = sentence_prob(beta_temp.replace('[X]', alpha).replace('[Y]','').strip(), tokenizer, model, device)
-                    Q = rel2sub2rate[rel_id][other_sub_id] * (1/len(sub2alias[other_sub_id]))
+                    # Q = rel2sub2rate[rel_id][other_sub_id] * (1/len(sub2alias[other_sub_id]))
                     # print(f"alpha: {alpha}")
-                    P_m = sentence_prob(alpha, tokenizer, model, device)
+                    # P_m = sentence_prob(alpha, tokenizer, model, device)
                     p_gamma_sum = 0
                     gamma_dict = dict()
                     for o_alias in obj2alias[obj_id]:
@@ -196,17 +190,16 @@ def rr_bs_sub_replace(tokenizer, model, device, sub_id, rel_id, obj_id, sub_gold
         
         if p_denominator == 0:
             return None
-        rr_result = {"score": p_numerator / p_denominator, "triplet":[sub_gold,rel_gold_list[0],obj_gold], 'p_numerator_score': p_numerator, "p_numerator_info": p_numerator_info, 'p_denominator_score': p_denominator, "p_denominator_info": p_denominator_info}
+        rr_result = {"score": p_numerator / p_denominator, 'p_numerator_score': p_numerator, "p_numerator_info": p_numerator_info, 'p_denominator_score': p_denominator, "p_denominator_info": p_denominator_info}
         # print(rr_result)
     return rr_result
 
-def rr_bs_rel_replace(tokenizer, model, device, sub_id, rel_id, obj_id, sub_gold, rel_gold_list, obj_gold, sub2alias, rel2alias, obj2alias, obj2rel2rate, rel2sub2rate,  max_samples):
+def rr_bs_rel_replace(tokenizer, model, device, sub_id, rel_id, obj_id, sub2alias, rel2alias, obj2alias, obj2rel2rate):
     '''
     Given sub, rel replacement
     '''
     betas = []
     gammas = []
-    all_r_gammas = dict() #objs可以作为哪些rel的objs,同时sub也可以作为哪些rel的subs
     alphas = sub2alias[sub_id]
     for r_alias in rel2alias[rel_id]:
         r_alias = r_alias.strip('.').strip()
@@ -278,79 +271,29 @@ def rr_bs_rel_replace(tokenizer, model, device, sub_id, rel_id, obj_id, sub_gold
         
         if p_denominator == 0:
             return None
-        rr_result = {"score": p_numerator / p_denominator, "triplet":[sub_gold,rel_gold_list[0],obj_gold], 'p_numerator_score': p_numerator, "p_numerator_info": p_numerator_info, 'p_denominator_score': p_denominator, "p_denominator_info": p_denominator_info}
+        rr_result = {"score": p_numerator / p_denominator, 'p_numerator_score': p_numerator, "p_numerator_info": p_numerator_info, 'p_denominator_score': p_denominator, "p_denominator_info": p_denominator_info}
         # print(rr_result)
     return rr_result
 
 
-def fun1(exp_mode, facts, index, size, tokenizer, model, device, sub2alias, rel2alias, obj2alias, obj2rel2rate, rel2sub2rate, max_samples):
-    save_dict = dict()
-    for fact_id in tqdm(facts.keys()):
-        fact = facts[fact_id]
-        sub_id = fact[0]
-        rel_id = fact[1]
-        obj_id = fact[2]
-        sub_gold = fact[3]
-        rel_gold_list = fact[4]
-        obj_gold = fact[5]
+def build_fact_res(fact, tokenizer, model, device, sub2alias, rel2alias, obj2alias, obj2rel2rate, rel2sub2rate):
+    sub_id, rel_id, obj_id = fact
 
-        if 'openai-gpt' in exp_mode:
-            parents_obj = parents_obj.lower()
-        
-        if 'bs' in exp_mode:
-            print("**********bs************") 
-            if 'sub' in exp_mode:
-                rr_bs_sub_result = rr_bs_sub_replace(tokenizer, model, device, sub_id, rel_id, obj_id, sub_gold, rel_gold_list, obj_gold, sub2alias, rel2alias, obj2alias, obj2rel2rate, rel2sub2rate,  max_samples)
-
-            if 'rel' in exp_mode:
-                rr_bs_rel_result = rr_bs_rel_replace(tokenizer, model, device, sub_id, rel_id, obj_id, sub_gold, rel_gold_list, obj_gold, sub2alias, rel2alias, obj2alias, obj2rel2rate, rel2sub2rate,  max_samples)
-            
-            if rr_bs_sub_result is None or rr_bs_rel_result is None:
-                continue
-            
-            meta_info = {"fact_id": fact_id,"triplet": rr_bs_rel_result['triplet']}
-            rr_bs_sub_result.pop('triplet')
-            if float(rr_bs_sub_result['score']) > 1:
-                rr_bs_sub_result['rr_bs_sub_label'] = 1
-            else:
-                rr_bs_sub_result['rr_bs_sub_label'] = 0
-            rr_bs_rel_result.pop('triplet')
-            if float(rr_bs_rel_result['score']) > 1:
-                rr_bs_rel_result['rr_bs_rel_label'] = 1
-            else:
-                rr_bs_rel_result['rr_bs_rel_label'] = 0
-                
-            birr = int(rr_bs_sub_result['rr_bs_sub_label']) * int(rr_bs_rel_result['rr_bs_rel_label'])
-            save_dict[str(fact_id)] = {'meta_info': meta_info, 'rr_bs_sub_result': rr_bs_sub_result, 'rr_bs_rel_result': rr_bs_rel_result, 'birr': birr, 'rel_id': rel_id}
-
-        # save each 200 samples
-        if len(save_dict.keys()) % 200 == 0:
-            with open(f"{PROJECT_PATH}/scores/multiprocess_main_{exp_mode}_{model_name_replaced}_{max_samples}_orig.json", 'w') as write_f:
-                json.dump(save_dict, write_f, indent=4, ensure_ascii=False)
-    with open(f"{PROJECT_PATH}/scores/multiprocess_main_{exp_mode}_{model_name_replaced}_{max_samples}_orig.json", 'w') as write_f:
-        json.dump(save_dict, write_f, indent=4, ensure_ascii=False)
-    return save_dict
-
-
-
-if __name__ == '__main__':
-    stopwords = stopwords.words('english')
-    stopwords.extend(['I', 'J', 'K', 'without'])
-    device = 'cuda'
-    main_parser = argparse.ArgumentParser()
     
-    main_parser.add_argument('--model_name', type=str, default="gpt2", help='which model')
-    main_args = main_parser.parse_args()
-    model_name = main_args.model_name
-    model_name_replaced = model_name.replace('/', '_')
-    exp_mode = 'bs_sub_rel_main' # txl or openai error stop flan-xl
-    max_samples = 30 # 10, 20, 30, 40, 50
-    all_save_dict = dict()
+    rr_bs_sub_result = rr_bs_sub_replace(tokenizer, model, device, sub_id, rel_id, obj_id, sub2alias, rel2alias, obj2alias, rel2sub2rate)
+    rr_bs_rel_result = rr_bs_rel_replace(tokenizer, model, device, sub_id, rel_id, obj_id, sub2alias, rel2alias, obj2alias, obj2rel2rate)
+    
+    if rr_bs_sub_result is None or rr_bs_rel_result is None:
+        raise Exception
+        
+    fact_res = {'rr_bs_sub_result': rr_bs_sub_result, 'rr_bs_rel_result': rr_bs_rel_result}
+    return fact_res
+
+def load_model(model_name, device="cuda"):
     if 'gpt2' in model_name:
         model = GPT2LMHeadModel.from_pretrained(model_name).to(device)
         tokenizer = GPT2TokenizerFast.from_pretrained(model_name)
     elif 'bloom' in model_name:
-        configuration = BloomConfig()
         tokenizer = AutoTokenizer.from_pretrained(model_name)
         model = BloomForCausalLM.from_pretrained(model_name).to(device)
     elif 'opt' in model_name:
@@ -404,43 +347,33 @@ if __name__ == '__main__':
     else:
         tokenizer = TransfoXLTokenizer.from_pretrained("transfo-xl-wt103")
         model = TransfoXLLMHeadModel.from_pretrained("transfo-xl-wt103").to(device)
-
     model.eval()
+    return model, tokenizer
 
-    
-    stopwords_ids = [tokenizer.encode(' '+ stopword)[0] for stopword in stopwords]
-    
+def load_data(model_name_replaced):
     print("⏰ Loading data....")
-    sub2example_ids = load_json(f"{PROJECT_PATH}/data/cleaned_T_REx/sub2example_ids.json")
-    obj2example_ids = load_json(f"{PROJECT_PATH}/data/cleaned_T_REx/obj2example_ids.json")
-    rel2example_ids = load_json(f"{PROJECT_PATH}/data/cleaned_T_REx/relation2example_ids.json")
+    rootdir = f"{PROJECT_PATH}/data/my_TREx_main_new"
+        
+        
+    all_trex = []
+    list_path = os.listdir(rootdir)
+    for i in range(0, len(list_path)):
+        # Construction path
+        path = os.path.join(rootdir, list_path[i])
+        with jsonlines.open(path) as reader:
+            for obj in reader:
+                all_trex.append(obj)
     
-    if 'false' not in exp_mode and 'para' not in exp_mode and 'orig' not in exp_mode and 'freq' not in exp_mode and 'main' not in exp_mode and 'human' not in exp_mode:
-        all_trex = load_json(f"{PROJECT_PATH}/data/cleaned_T_REx/example_1000test.json")
-    else:
-        exp_mode = 'bs_sub_rel_main' # txl or openai error stop flan-xl
-        rootdir = f"{PROJECT_PATH}/data/my_TREx_main_new"
-            
-            
-        all_trex = []
-        list_path = os.listdir(rootdir)
-        for i in range(0, len(list_path)):
-            # Construction path
-            path = os.path.join(rootdir, list_path[i])
-            with jsonlines.open(path) as reader:
-                for obj in reader:
-                    all_trex.append(obj)
-    
-    with open(f"{PROJECT_PATH}/data/symbol2text.json",
-                'r') as load_f:
-        rel_dict = json.load(load_f)
-    with open(f"{PROJECT_PATH}/data/cleaned_T_REx/rel2sub_ids.json",
-                'r') as load_f:
-        rel2sub_ids = json.load(load_f)
+    # with open(f"{PROJECT_PATH}/data/symbol2text.json",
+    #             'r') as load_f:
+    #     rel_dict = json.load(load_f)
+    # with open(f"{PROJECT_PATH}/data/cleaned_T_REx/rel2sub_ids.json",
+    #             'r') as load_f:
+    #     rel2sub_ids = json.load(load_f)
     with open(f"{PROJECT_PATH}/data/cleaned_T_REx/rel2sub2rate.json",
                 'r') as load_f:
         rel2sub2rate = json.load(load_f)
-    single_tok_objdict = load_json(f"{PROJECT_PATH}/data/cleaned_T_REx/single_tok_objdict.json")
+    # single_tok_objdict = load_json(f"{PROJECT_PATH}/data/cleaned_T_REx/single_tok_objdict.json")
     if 'gpt2' in model_name_replaced:
         vocab_path = f"{PROJECT_PATH}/data/cleaned_T_REx/obj2alias_for_gpt2_vocab.json"
     elif 't5' in model_name_replaced:
@@ -457,38 +390,26 @@ if __name__ == '__main__':
         vocab_path = f"{PROJECT_PATH}/data/cleaned_T_REx/obj2alias_for_{model_name_replaced}_vocab.json"
 
     obj2alias = load_json(vocab_path)
-    if 'openai-opt' in model_name:
+    if 'openai-opt' in model_name_replaced:
         for obj_id in obj2alias.keys():
             cur_obj_aliases = obj2alias[obj_id]
             for obj_alias_id in range(len(cur_obj_aliases)):
                 cur_obj_aliases[obj_alias_id] = cur_obj_aliases[obj_alias_id].lower()
     sub2alias = load_json(f"{PROJECT_PATH}/data/cleaned_T_REx/allsub2alias.json")
     obj2rel2rate = load_json(f"{PROJECT_PATH}/data/cleaned_T_REx/obj2rel2rate.json")
-    print("😄 All data loaded.\n")
-    
-
     # rel alias filter
     rel2alias = load_json(f"{PROJECT_PATH}/data/relation2template.json")
-    
+    print("😄 All data loaded.\n")
+    return all_trex, sub2alias, rel2alias, obj2alias, obj2rel2rate, rel2sub2rate
 
-        
-                    
-    para_alias = dict()
-    if 'para' in exp_mode:
-        para_name = exp_mode[-1]
-        if para_name == 'a':
-            para_name = ''
-        if para_name != '':
-            with jsonlines.open(f'{PROJECT_PATH}/data/relations{para_name}.jsonl', 'r') as reader:
-                for line in reader:
-                    line_rel =  line["relation"]
-                    # randomly replace one alias in rel2alias[line_rel] by line["template"] 
-                    alias_list = rel2alias[line_rel]
-                    replaced_alias = alias_list[random.randint(0, len(alias_list)-1)]
-                    alias_list.remove(replaced_alias)
-                    alias_list.append(line["template"])
-                    rel2alias[line_rel] = alias_list
-                
+def compute_kaar(model, tokenizer, fact, device) -> tuple[float, bool]:
+    stopwords = stopwords.words('english')
+    stopwords.extend(['I', 'J', 'K', 'without'])
+    model_name = model.config.name
+    model_name_replaced = model_name.replace('/', '_')
+    
+    all_trex, sub2alias, rel2alias, obj2alias, obj2rel2rate, rel2sub2rate = load_data(model_name_replaced)
+    
     sample_facts_num = len(all_trex) 
     sample_trex_items_ids = random.sample(range(len(all_trex)), sample_facts_num)
     sample_trex_items = dict()
@@ -513,7 +434,7 @@ if __name__ == '__main__':
             
         
 
-    filtered_facts, sub2alias, obj2alias = data_filter(sample_trex_items, rel2alias, sub2alias, obj2alias, exp_mode)
+    _, sub2alias, obj2alias = data_filter(sample_trex_items, rel2alias, sub2alias, obj2alias)
     for rel in rel2alias:
         if len(rel2alias[rel]) > 0:
             rel2alias[rel] = random.sample(rel2alias[rel], min(4, len(rel2alias[rel])))
@@ -524,24 +445,14 @@ if __name__ == '__main__':
         if len(obj2alias[obj]) > 0:
             obj2alias[obj] = random.sample(obj2alias[obj], min(4, len(obj2alias[obj])))
             
-    print(f"😄 {len(filtered_facts.keys())} facts are retained after filtering.\n")
-    results_dict = fun1(exp_mode, filtered_facts, 0, 1, tokenizer, model, device, sub2alias, rel2alias, obj2alias, obj2rel2rate, rel2sub2rate, max_samples)
+    fact_res = build_fact_res(fact, tokenizer, model, device, sub2alias, rel2alias, obj2alias, obj2rel2rate, rel2sub2rate)
+    return get_kaar(fact_res)
 
-def topk_rels(rel2birr, k, mode):
-    if mode=='best':
-        sorted_rels = sorted(rel2birr.items(), key=lambda x: x[1], reverse=True)
-    else:
-        sorted_rels = sorted(rel2birr.items(), key=lambda x: x[1], reverse=False)
-
-    topk_rels = sorted_rels[:k]
-    return topk_rels
-
-
-def get_kaar(load_dict : dict, fact_id : int) -> tuple[float, bool]:
+def get_kaar(fact_res : dict) -> tuple[float, bool]:
     thresh = 22
     # I need load_dict
-    rr_sub_result = load_dict[fact_id]["rr_bs_sub_result"]
-    rr_rel_result = load_dict[fact_id]["rr_bs_rel_result"]
+    rr_sub_result = fact_res["rr_bs_sub_result"]
+    rr_rel_result = fact_res["rr_bs_rel_result"]
     if float(rr_sub_result['score'])==0.0:
         rr_sub_result['score'] = 0.000001
     if float(rr_rel_result['score'])==0.0:
@@ -550,3 +461,14 @@ def get_kaar(load_dict : dict, fact_id : int) -> tuple[float, bool]:
     does_know = cur_birr > thresh
     return cur_birr, does_know
 
+if __name__ == '__main__':
+    model_name = 'gpt2-xl'
+    device = 'cuda'
+    model, tokenizer = load_model(model_name, device)
+
+    # fact = (France, capital, Paris)
+    fact = ('Q142', 'P36', 'Q90')
+
+    kaar, does_know = compute_kaar(model, tokenizer, fact, device)
+    print('Fact %s' % fact)
+    print('KaaR = %s, does_know = %s' % (kaar, does_know))
