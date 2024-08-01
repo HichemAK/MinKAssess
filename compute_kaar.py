@@ -402,52 +402,6 @@ def load_data(model_name_replaced):
     print("😄 All data loaded.\n")
     return all_trex, sub2alias, rel2alias, obj2alias, obj2rel2rate, rel2sub2rate
 
-def compute_kaar(model, tokenizer, fact, device) -> tuple[float, bool]:
-    stopwords = stopwords.words('english')
-    stopwords.extend(['I', 'J', 'K', 'without'])
-    model_name = model.config.name
-    model_name_replaced = model_name.replace('/', '_')
-    
-    all_trex, sub2alias, rel2alias, obj2alias, obj2rel2rate, rel2sub2rate = load_data(model_name_replaced)
-    
-    sample_facts_num = len(all_trex) 
-    sample_trex_items_ids = random.sample(range(len(all_trex)), sample_facts_num)
-    sample_trex_items = dict()
-    for sample_id in sample_trex_items_ids:
-        if len(sample_trex_items.keys()) > sample_facts_num:
-            break
-        
-        fact_id = all_trex[sample_id]['fact_id']
-        item = all_trex[sample_id]
-        if 'sub_label' in item.keys():
-            # for false facts
-            false_trans = {'Atlanta': 'Q23556', 'English': 'Q1860', 'Chicago': 'Q1297', 'France': 'Q142', 'London': 'Q84', 'French': 'Q150', 'medicine': 'Q11190', 'United': 'Q30', 'NBC': 'Q13974', 'RCA': 'Q50074604', 'ABC': 'Q169889', 'England': 'Q21', 'science': 'Q336'}
-            if '#' in false_trans[item['obj_label']] or '#' in item['subj_label']:
-                print("the fact is not in the original T_REx dataset")
-                continue
-            sample_trex_items[str(fact_id)] = (item['subj_label'], item['relation'], false_trans[item['obj_label']])
-        else:
-            if '#' in item['obj_label'] or '#' in item['subj_label']:
-                print("the fact is not in the original T_REx dataset")
-                continue
-            sample_trex_items[str(fact_id)] = (item['subj_label'], item['relation'], item['obj_label'])
-            
-        
-
-    _, sub2alias, obj2alias = data_filter(sample_trex_items, rel2alias, sub2alias, obj2alias)
-    for rel in rel2alias:
-        if len(rel2alias[rel]) > 0:
-            rel2alias[rel] = random.sample(rel2alias[rel], min(4, len(rel2alias[rel])))
-    for sub in sub2alias:
-        if len(sub2alias[sub]) > 0:
-            sub2alias[sub] = random.sample(sub2alias[sub], min(4, len(sub2alias[sub])))
-    for obj in obj2alias:
-        if len(obj2alias[obj]) > 0:
-            obj2alias[obj] = random.sample(obj2alias[obj], min(4, len(obj2alias[obj])))
-            
-    fact_res = build_fact_res(fact, tokenizer, model, device, sub2alias, rel2alias, obj2alias, obj2rel2rate, rel2sub2rate)
-    return get_kaar(fact_res)
-
 def get_kaar(fact_res : dict) -> tuple[float, bool]:
     thresh = 22
     # I need load_dict
@@ -461,14 +415,65 @@ def get_kaar(fact_res : dict) -> tuple[float, bool]:
     does_know = cur_birr > thresh
     return cur_birr, does_know
 
+class KaaR:
+    def __init__(self, model_name : str, device = 'cuda') -> None:
+        self.model_name = model_name
+        self.model, self.tokenizer = load_model(model_name, device)
+        self.device = device
+        self.model_name_replaced = model_name.replace('/', '_')
+        self.stopwords = stopwords.words('english')
+        self.stopwords.extend(['I', 'J', 'K', 'without'])
+        
+        self.all_trex, self.sub2alias, self.rel2alias, self.obj2alias, self.obj2rel2rate, self.rel2sub2rate = load_data(self.model_name_replaced)
+        
+        sample_facts_num = len(self.all_trex) 
+        sample_trex_items_ids = random.sample(range(len(self.all_trex)), sample_facts_num)
+        sample_trex_items = dict()
+        for sample_id in sample_trex_items_ids:
+            if len(sample_trex_items.keys()) > sample_facts_num:
+                break
+            
+            fact_id = self.all_trex[sample_id]['fact_id']
+            item = self.all_trex[sample_id]
+            if 'sub_label' in item.keys():
+                # for false facts
+                false_trans = {'Atlanta': 'Q23556', 'English': 'Q1860', 'Chicago': 'Q1297', 'France': 'Q142', 'London': 'Q84', 'French': 'Q150', 'medicine': 'Q11190', 'United': 'Q30', 'NBC': 'Q13974', 'RCA': 'Q50074604', 'ABC': 'Q169889', 'England': 'Q21', 'science': 'Q336'}
+                if '#' in false_trans[item['obj_label']] or '#' in item['subj_label']:
+                    print("the fact is not in the original T_REx dataset")
+                    continue
+                sample_trex_items[str(fact_id)] = (item['subj_label'], item['relation'], false_trans[item['obj_label']])
+            else:
+                if '#' in item['obj_label'] or '#' in item['subj_label']:
+                    print("the fact is not in the original T_REx dataset")
+                    continue
+                sample_trex_items[str(fact_id)] = (item['subj_label'], item['relation'], item['obj_label'])
+                
+            
+
+        _, self.sub2alias, self.obj2alias = data_filter(sample_trex_items, self.rel2alias, self.sub2alias, self.obj2alias)
+        for rel in self.rel2alias:
+            if len(self.rel2alias[rel]) > 0:
+                self.rel2alias[rel] = random.sample(self.rel2alias[rel], min(4, len(self.rel2alias[rel])))
+        for sub in self.sub2alias:
+            if len(self.sub2alias[sub]) > 0:
+                self.sub2alias[sub] = random.sample(self.sub2alias[sub], min(4, len(self.sub2alias[sub])))
+        for obj in self.obj2alias:
+            if len(self.obj2alias[obj]) > 0:
+                self.obj2alias[obj] = random.sample(self.obj2alias[obj], min(4, len(self.obj2alias[obj])))
+
+
+    def compute(self, fact : tuple) -> tuple[float, bool]:
+        fact_res = build_fact_res(fact, self.tokenizer, self.model, self.device, self.sub2alias, self.rel2alias, self.obj2alias, self.obj2rel2rate, self.rel2sub2rate)
+        return get_kaar(fact_res)
+
 if __name__ == '__main__':
     model_name = 'gpt2-xl'
     device = 'cuda'
-    model, tokenizer = load_model(model_name, device)
+    kaar = KaaR(model_name, device)
 
     # fact = (France, capital, Paris)
     fact = ('Q142', 'P36', 'Q90')
 
-    kaar, does_know = compute_kaar(model, tokenizer, fact, device)
+    kaar, does_know = kaar.compute(fact)
     print('Fact %s' % fact)
     print('KaaR = %s, does_know = %s' % (kaar, does_know))
