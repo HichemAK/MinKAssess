@@ -3,11 +3,10 @@ Preprocess for OOV words in the object aliases.
 '''
 
 import json
-import torch
-from transformers import GPT2TokenizerFast, BertForMaskedLM, BertTokenizerFast, RobertaForMaskedLM, RobertaTokenizerFast, AutoTokenizer, AutoModelForMaskedLM, TransfoXLTokenizer, TransfoXLLMHeadModel, T5Tokenizer, T5ForConditionalGeneration,OpenAIGPTLMHeadModel, OpenAIGPTTokenizer, XLNetLMHeadModel, XLNetTokenizer, GPTNeoForCausalLM, AutoTokenizer, GPTJForCausalLM
-from transformers import BloomConfig, BloomModel, OPTConfig, OPTModel, BloomTokenizerFast,GPT2Tokenizer, LlamaForCausalLM, LlamaTokenizer,AutoModelForSeq2SeqLM,AutoModelForCausalLM
+from transformers import GPT2TokenizerFast, AutoTokenizer, TransfoXLTokenizer, T5Tokenizer, OpenAIGPTTokenizer, XLNetTokenizer, AutoTokenizer
+from transformers import GPT2Tokenizer, LlamaTokenizer
 
-from transformers import AutoTokenizer, BloomModel, BloomForCausalLM, OPTModel, OPTForCausalLM
+from transformers import AutoTokenizer
 
 from globs import PROJECT_PATH
 

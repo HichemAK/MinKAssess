@@ -2,7 +2,7 @@ import json
 from statistics import geometric_mean
 
 import torch
-from transformers import GPT2LMHeadModel, GPT2TokenizerFast, BertForMaskedLM, BertTokenizerFast, AutoTokenizer, TransfoXLTokenizer, TransfoXLLMHeadModel,T5Tokenizer, T5ForConditionalGeneration,OpenAIGPTLMHeadModel, OpenAIGPTTokenizer, XLNetTokenizer, XLNetLMHeadModel, GPTNeoForCausalLM, AutoTokenizer, GPTJForCausalLM,AutoModelForCausalLM
+from transformers import GPT2LMHeadModel, GPT2TokenizerFast, BertForMaskedLM, BertTokenizerFast, AutoTokenizer, TransfoXLTokenizer, TransfoXLLMHeadModel,T5Tokenizer, T5ForConditionalGeneration,OpenAIGPTLMHeadModel, OpenAIGPTTokenizer, XLNetTokenizer, XLNetLMHeadModel, GPTNeoForCausalLM, AutoTokenizer, GPTJForCausalLM, AutoModelForCausalLM
 from transformers import AutoTokenizer, BloomForCausalLM, OPTForCausalLM, AutoModelForSeq2SeqLM
 from src.data_preprocess.gen_obj_alias_clean_dict import judge_obj_in_vocab
 from src.data_preprocess.wikidata_get import *
@@ -164,9 +164,7 @@ def rr_bs_sub_replace(tokenizer, model, device, sub_id, rel_id, obj_id, sub2alia
         
         p_denominator = 0
         subids_list = [other_sub_id for other_sub_id in rel2sub2rate[rel_id].keys()] 
-        # Q_weights = torch.Tensor(probs_list)
         sample_k = 4
-        # Q_sampled_sub_idxes = torch.multinomial(Q_weights, min(len(probs_list),sample_k))
         Q_sampled_sub_idxes = random.sample(range(len(subids_list)), min(sample_k, len(subids_list)))
         Q_sampled_sub_ids = [subids_list[idx] for idx in Q_sampled_sub_idxes]
         for beta_temp in beta_temps:
@@ -175,9 +173,6 @@ def rr_bs_sub_replace(tokenizer, model, device, sub_id, rel_id, obj_id, sub2alia
                     if alpha == None or beta_temp == None:
                         continue
                     p_beta = sentence_prob(beta_temp.replace('[X]', alpha).replace('[Y]','').strip(), tokenizer, model, device)
-                    # Q = rel2sub2rate[rel_id][other_sub_id] * (1/len(sub2alias[other_sub_id]))
-                    # print(f"alpha: {alpha}")
-                    # P_m = sentence_prob(alpha, tokenizer, model, device)
                     p_gamma_sum = 0
                     gamma_dict = dict()
                     for o_alias in obj2alias[obj_id]:
@@ -273,7 +268,6 @@ def rr_bs_rel_replace(tokenizer, model, device, sub_id, rel_id, obj_id, sub2alia
         if p_denominator == 0:
             return None
         rr_result = {"score": p_numerator / p_denominator, 'p_numerator_score': p_numerator, "p_numerator_info": p_numerator_info, 'p_denominator_score': p_denominator, "p_denominator_info": p_denominator_info}
-        # print(rr_result)
     return rr_result
 
 
@@ -450,16 +444,9 @@ class KaaR:
                 for obj in reader:
                     all_trex.append(obj)
         
-        # with open(f"{PROJECT_PATH}/data/symbol2text.json",
-        #             'r') as load_f:
-        #     rel_dict = json.load(load_f)
-        # with open(f"{PROJECT_PATH}/data/cleaned_T_REx/rel2sub_ids.json",
-        #             'r') as load_f:
-        #     rel2sub_ids = json.load(load_f)
         with open(f"{PROJECT_PATH}/data/cleaned_T_REx/rel2sub2rate.json",
                     'r') as load_f:
             rel2sub2rate = json.load(load_f)
-        # single_tok_objdict = load_json(f"{PROJECT_PATH}/data/cleaned_T_REx/single_tok_objdict.json")
         if 'gpt2' in model_name_replaced:
             vocab_path = f"{PROJECT_PATH}/data/cleaned_T_REx/obj2alias_for_gpt2_vocab.json"
         elif 't5' in model_name_replaced:
