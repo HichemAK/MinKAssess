@@ -494,7 +494,7 @@ class KaaR:
             for alias in origial_aliases:
                 if alias == None:
                     continue
-                input_ids = self.tokenizer(alias, return_tensors='pt').to(device).input_ids[0]
+                input_ids = self.tokenizer(alias, return_tensors='pt').to(self.device).input_ids[0]
                 if judge_obj_in_vocab(self.tokenizer, alias, input_ids, verbose):
                     save_dict[obj_id].append(alias)
                     valid_obj_num += 1
