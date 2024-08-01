@@ -42,10 +42,10 @@ if __name__ == '__main__':
                 sub2aliases[sub_id] = aliases
         except:
             print(f"error for {sub_id}")
-            continue        
+            continue
     with open(f"YOUR_PROJECT_PATHdata/cleaned_T_REx/sub_alias/sub2aliases_{args.bash_id}.json", 'w') as write_f:
-	    json.dump(sub2aliases, write_f, indent=4, ensure_ascii=False)
-     
+        json.dump(sub2aliases, write_f, indent=4, ensure_ascii=False)
+        
     sub2example_ids = None
     sub2aliases = None 
      
