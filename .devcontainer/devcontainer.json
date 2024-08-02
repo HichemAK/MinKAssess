@@ -8,6 +8,9 @@
             "GROUP_ID": "${localEnv:GID}"
         }
     },
+    "runArgs": [
+        "--gpus", "all"
+    ],
     "customizations": {
         "vscode": {
             "extensions": [
