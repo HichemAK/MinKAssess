@@ -36,10 +36,10 @@ USER $USERNAME
 # Install any needed packages specified in environment.yml
 RUN conda env create -f /workspace/environment.yml
 
-# Make RUN commands use the new environment:
-SHELL ["conda", "run", "-n", "KAssess", "/bin/bash", "-c"]
+# # Make RUN commands use the new environment:
+# SHELL ["conda", "run", "-n", "KAssess", "/bin/bash", "-c"]
 
-# Make sure the environment is activated:
-ENV PATH /opt/conda/envs/KAssess/bin:$PATH
+# # Make sure the environment is activated:
+# ENV PATH /opt/conda/envs/KAssess/bin:$PATH
 
 RUN conda init bash
