@@ -378,11 +378,11 @@ def get_kaar(fact_res : dict, thresh : int) -> tuple[float, bool]:
     return cur_birr, does_know
 
 class KaaR:
-    def __init__(self, model_name : str, device = 'cuda', thresh=22) -> None:
-        self.model_name = model_name
-        self.model, self.tokenizer = load_model(model_name, device)
+    def __init__(self, model, tokenizer, device = 'cuda', thresh=22) -> None:
+        self.model_name = model.config.name_or_path
+        self.model, self.tokenizer = load_model(self.model_name, device)
         self.device = device
-        self.model_name_replaced = model_name.replace('/', '_')
+        self.model_name_replaced = self.model_name.replace('/', '_')
         self.stopwords = stopwords.words('english')
         self.stopwords.extend(['I', 'J', 'K', 'without'])
         self.thresh = thresh
