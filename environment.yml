@@ -2,10 +2,12 @@ name: KAssess
 channels:
   - pytorch
   - nvidia
+  - conda-forge
   - defaults
 dependencies:
   - _libgcc_mutex=0.1=main
   - _openmp_mutex=5.1=1_gnu
+  - accelerate=0.33.0=pyhd8ed1ab_0
   - aiohttp=3.9.5=py312h5eee18b_0
   - aiosignal=1.2.0=pyhd3eb1b0_0
   - aom=3.6.0=h6a678d5_0
@@ -30,9 +32,9 @@ dependencies:
   - brotli-python=1.0.9=py312h6a678d5_8
   - bzip2=1.0.8=h5eee18b_6
   - c-ares=1.19.1=h5eee18b_0
-  - ca-certificates=2024.7.2=h06a4308_0
+  - ca-certificates=2024.7.4=hbcca054_0
   - cairo=1.16.0=hb05425b_5
-  - certifi=2024.7.4=py312h06a4308_0
+  - certifi=2024.7.4=pyhd8ed1ab_0
   - charset-normalizer=3.3.2=pyhd3eb1b0_0
   - click=8.1.7=py312h06a4308_0
   - cuda-cudart=12.4.127=h99ab3db_0
@@ -150,6 +152,7 @@ dependencies:
   - pillow=10.4.0=py312h5eee18b_0
   - pip=24.0=py312h06a4308_0
   - pixman=0.40.0=h7f8727e_1
+  - psutil=5.9.0=py312h5eee18b_0
   - pyarrow=16.1.0=py312h526ad5a_0
   - pybind11-abi=5=hd3eb1b0_0
   - pysocks=1.7.1=py312h06a4308_0
