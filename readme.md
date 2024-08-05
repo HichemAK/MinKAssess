@@ -38,6 +38,9 @@ print('Fact %s' % str(fact))
 print('KaRR = %s' % karr)
 ans = 'Yes' if does_know else 'No'
 print('According to KaRR, does the model knows this fact? Answer: %s' % ans)
+# Output:
+# KaRR = 3.338972442145268
+# According to KaRR, does the model knows this fact? Answer: No
 ```
 
 ## Difference with original repo
