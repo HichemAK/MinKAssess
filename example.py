@@ -12,8 +12,8 @@ kaar = KaRR(model, tokenizer, device)
 # You can find other facts by looking into Wikidata
 fact = ('Q142', 'P36', 'Q90')
 
-kaar, does_know = kaar.compute(fact)
+karr, does_know = kaar.compute(fact)
 print('Fact %s' % str(fact))
-print('KaaR = %s' % kaar)
+print('KaRR = %s' % karr)
 ans = 'Yes' if does_know else 'No'
-print('According to KaaR, does the model knows this fact? Answer: %s' % ans)
+print('According to KaRR, does the model knows this fact? Answer: %s' % ans)
