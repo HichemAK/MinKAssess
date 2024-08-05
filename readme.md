@@ -19,7 +19,7 @@ conda activate KAssess
 
 Here is a simple example of **how to quantify the knowledge of a fact by an LLM using KaaR**
 ```python
-from kaar import KaaR
+from karr import KaRR
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 model_name = 'gpt2'
@@ -27,20 +27,17 @@ device = 'cuda'
 model = AutoModelForCausalLM.from_pretrained(model_name, device_map = device)
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 
-kaar = KaaR(model, tokenizer, device)
+kaar = KaRR(model, tokenizer, device)
 
 # Testing the fact: (France, capital, Paris)
 # You can find other facts by looking into Wikidata
 fact = ('Q142', 'P36', 'Q90')
 
-kaar, does_know = kaar.compute(fact)
+karr, does_know = kaar.compute(fact)
 print('Fact %s' % str(fact))
-print('KaaR = %s' % kaar)
+print('KaRR = %s' % karr)
 ans = 'Yes' if does_know else 'No'
-print('According to KaaR, does the model knows this fact? Answer: %s' % ans)
-# Output:
-# KaaR = 3.338972442145268
-# According to KaaR, does the model knows this fact? Answer: No
+print('According to KaRR, does the model knows this fact? Answer: %s' % ans)
 ```
 
 ## Difference with original repo
