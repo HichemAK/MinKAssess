@@ -12,6 +12,7 @@ import os
 import os.path as osp
 import nltk
 import math
+from tqdm import tqdm
 
 from globs import PROJECT_PATH
 from utils import download_and_unzip, load_json
