@@ -350,23 +350,23 @@ def load_model(model_name, device="cuda"):
 
 def setup_data_folder() -> None:
     DATA_URL = "https://zenodo.org/records/13144454/files/data_for_KAssess.zip?download=1"
-    print('Setup KaaR...')
+    print('Setup KaRR...')
     # URL of the zip file to download
     # Ensure the 'data' directory exists
     data_path = osp.join(PROJECT_PATH, 'data')
     if not osp.exists(data_path):
         os.makedirs(data_path)
     else:
-        print('KaaR setup already DONE!')
+        print('KaRR setup already DONE!')
         return 
 
     # Call the function with the URL
     download_and_unzip(DATA_URL, data_path, retries=10, backoff_factor=1)
-    print('KaaR setup DONE!')
+    print('KaRR setup DONE!')
 
 
 
-def get_kaar(fact_res : dict, thresh : int) -> tuple[float, bool]:
+def get_karr(fact_res : dict, thresh : int) -> tuple[float, bool]:
     # I need load_dict
     rr_sub_result = fact_res["rr_bs_sub_result"]
     rr_rel_result = fact_res["rr_bs_rel_result"]
@@ -428,7 +428,7 @@ class KaRR:
 
     def compute(self, fact : tuple) -> tuple[float, bool]:
         fact_res = build_fact_res(fact, self.tokenizer, self.model, self.device, self.sub2alias, self.rel2alias, self.obj2alias, self.obj2rel2rate, self.rel2sub2rate)
-        return get_kaar(fact_res, self.thresh)
+        return get_karr(fact_res, self.thresh)
     
     def _load_data(self):
         setup_data_folder()
