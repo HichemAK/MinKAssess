@@ -1,4 +1,4 @@
-from kaar import KaaR
+from karr import KaRR
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 model_name = 'gpt2'
@@ -6,7 +6,7 @@ device = 'cuda'
 model = AutoModelForCausalLM.from_pretrained(model_name, device_map = device)
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 
-kaar = KaaR(model, tokenizer, device)
+kaar = KaRR(model, tokenizer, device)
 
 # Testing the fact: (France, capital, Paris)
 # You can find other facts by looking into Wikidata

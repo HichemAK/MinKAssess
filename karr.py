@@ -377,7 +377,7 @@ def get_kaar(fact_res : dict, thresh : int) -> tuple[float, bool]:
     does_know = cur_birr > thresh
     return cur_birr, does_know
 
-class KaaR:
+class KaRR:
     def __init__(self, model, tokenizer, device = 'cuda', thresh=22) -> None:
         self.model_name = model.config.name_or_path
         self.model, self.tokenizer = load_model(self.model_name, device)
