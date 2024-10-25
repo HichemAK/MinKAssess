@@ -1,0 +1,34 @@
+[project]
+name = "minkassess"
+version = "0.1.0"
+description = "Add your description here"
+authors = [
+    { name = "Hichem Ammar Khodja", email = "hichem.ammarkhodja@orange.com" }
+]
+dependencies = [
+    "torch==2.5.0+cu121",
+    "transformers>=4.46.0",
+    "jsonlines>=4.0.0",
+    "nltk>=3.9.1",
+    "wikidataintegrator>=0.9.30",
+]
+readme = "README.md"
+requires-python = ">= 3.8"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.rye]
+managed = true
+dev-dependencies = []
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/MinKAssess"]
+
+[[tool.rye.sources]]
+name = "pytorch"
+url = "https://download.pytorch.org/whl/cu121"
