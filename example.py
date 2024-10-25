@@ -3,7 +3,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 
 model_name = 'gpt2'
 device = 'cuda'
-model = AutoModelForCausalLM.from_pretrained(model_name, device_map = device)
+model = AutoModelForCausalLM.from_pretrained(model_name).cuda()
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 
 karr = KaRR(model, tokenizer, device)
