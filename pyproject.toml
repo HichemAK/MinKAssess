@@ -1,5 +1,5 @@
 [project]
-name = "minkassess"
+name = "minkarr"
 version = "0.1.0"
 description = "Add your description here"
 authors = [
@@ -27,7 +27,7 @@ dev-dependencies = []
 allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/MinKAssess"]
+packages = ["src/minkarr"]
 
 [[tool.rye.sources]]
 name = "pytorch"

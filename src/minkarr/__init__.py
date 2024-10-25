@@ -15,7 +15,7 @@ import math
 from tqdm import tqdm
 
 from .globs import PROJECT_PATH
-from MinKAssess.utils import download_and_unzip, load_json
+from minkarr.utils import download_and_unzip, load_json
 try:
     nltk.data.find('stopwords')
 except LookupError:
