@@ -1,7 +1,4 @@
 from wikidataintegrator import wdi_core
-import json
-from tqdm import tqdm
-import argparse
 
 def get_wikidata_info(qid):
     my_first_wikidata_item = wdi_core.WDItemEngine(wd_item_id=qid)

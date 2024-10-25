@@ -1,4 +1,4 @@
-from karr import KaRR
+from MinKAssess import KaRR
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 model_name = 'gpt2'

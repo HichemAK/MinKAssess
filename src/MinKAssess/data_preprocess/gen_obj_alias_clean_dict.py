@@ -8,7 +8,7 @@ from transformers import GPT2Tokenizer, LlamaTokenizer
 
 from transformers import AutoTokenizer
 
-from globs import PROJECT_PATH
+from MinKAssess.globs import PROJECT_PATH
 
 def judge_obj_in_vocab(tokenizer, obj_label, obj_ids, verbose=0):
 

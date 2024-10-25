@@ -4,8 +4,8 @@ from statistics import geometric_mean
 import torch
 from transformers import GPT2LMHeadModel, GPT2TokenizerFast, BertForMaskedLM, BertTokenizerFast, AutoTokenizer, TransfoXLTokenizer, TransfoXLLMHeadModel,T5Tokenizer, T5ForConditionalGeneration,OpenAIGPTLMHeadModel, OpenAIGPTTokenizer, XLNetTokenizer, XLNetLMHeadModel, GPTNeoForCausalLM, AutoTokenizer, GPTJForCausalLM, AutoModelForCausalLM
 from transformers import AutoTokenizer, BloomForCausalLM, OPTForCausalLM, AutoModelForSeq2SeqLM
-from src.data_preprocess.gen_obj_alias_clean_dict import judge_obj_in_vocab
-from src.data_preprocess.wikidata_get import *
+from .data_preprocess.gen_obj_alias_clean_dict import judge_obj_in_vocab
+from .data_preprocess.wikidata_get import *
 import random
 import jsonlines
 import os
@@ -14,8 +14,8 @@ import nltk
 import math
 from tqdm import tqdm
 
-from globs import PROJECT_PATH
-from utils import download_and_unzip, load_json
+from .globs import PROJECT_PATH
+from MinKAssess.utils import download_and_unzip, load_json
 try:
     nltk.data.find('stopwords')
 except LookupError:
