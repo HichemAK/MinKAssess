@@ -12,9 +12,7 @@ This is a fork of the [official implementation](https://github.com/dqxiu/KAssess
 First setup the conda environment using the following command
 
 ```bash
-conda env create -f environment.yml
-conda init bash
-conda activate KAssess
+pip install minkarr
 ```
 
 Here is a simple example of **how to quantify the knowledge of a fact by an LLM using KaRR**
