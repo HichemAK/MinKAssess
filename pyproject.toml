@@ -1,7 +1,7 @@
 [project]
 name = "minkarr"
 version = "0.1.0"
-description = "Add your description here"
+description = "A minimal implementation of KaRR knowledge assessment method for Large Language Models (LLMs)"
 authors = [
     { name = "Hichem Ammar Khodja", email = "hichem.ammarkhodja@orange.com" }
 ]
