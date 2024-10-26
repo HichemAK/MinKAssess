@@ -9,10 +9,10 @@ This is a fork of the [official implementation](https://github.com/dqxiu/KAssess
 
 ## How to use?
 
-First setup the conda environment using the following command
+First, create a new virtual environment then install **minkarr** using the command:
 
 ```bash
-pip install minkarr
+pip install minkarr --extra-index-url https://download.pytorch.org/whl/cu121
 ```
 
 Here is a simple example of **how to quantify the knowledge of a fact by an LLM using KaRR**
@@ -44,7 +44,7 @@ print('According to KaRR, does the model knows this fact? Answer: %s' % ans)
 ## Difference with original repo
 
 - Easy-to-use
-- Clean code
+- Cleaner code
 - Minimalistic implementation: I kept only the portion of the code needed to compute KaRR and removed the rest
 - This implementation can compute KaRR on a single fact (the original implementation went through all facts)
 
