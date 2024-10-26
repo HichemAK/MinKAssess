@@ -17,6 +17,7 @@ attrs==24.2.0
     # via jsonlines
 backoff==2.2.1
     # via wikidataintegrator
+black==24.10.0
 blinker==1.8.2
     # via flask
 certifi==2022.12.7
@@ -29,6 +30,7 @@ chardet==5.2.0
 charset-normalizer==2.1.1
     # via requests
 click==8.1.7
+    # via black
     # via flask
     # via nltk
 filelock==3.13.1
@@ -73,6 +75,8 @@ mpmath==1.3.0
     # via sympy
 mwoauth==0.4.0
     # via wikidataintegrator
+mypy-extensions==1.0.0
+    # via black
 networkx==3.2.1
     # via torch
 nltk==3.9.1
@@ -113,12 +117,17 @@ oauthlib==3.2.2
     # via requests-oauthlib
     # via wikidataintegrator
 packaging==24.1
+    # via black
     # via huggingface-hub
     # via transformers
 pandas==2.2.3
     # via wikidataintegrator
+pathspec==0.12.1
+    # via black
 plantuml==0.3.0
     # via shexer
+platformdirs==4.3.6
+    # via black
 pyjsg==0.11.10
     # via pyshexc
     # via shexjsg
