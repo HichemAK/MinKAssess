@@ -179,7 +179,7 @@ requests-oauthlib==2.0.0
 safetensors==0.4.5
     # via transformers
 setuptools==70.0.0
-    # via torch
+    # via minkarr
 shexer==2.5.9
     # via wikidataintegrator
 shexjsg==0.8.2
@@ -199,8 +199,7 @@ sympy==1.13.1
     # via torch
 tokenizers==0.20.1
     # via transformers
-torch==2.5.0+cu121
-    # via minkarr
+torch==2.5.1+cu121
 tqdm==4.66.5
     # via huggingface-hub
     # via nltk

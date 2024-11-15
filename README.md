@@ -9,33 +9,33 @@ This is a fork of the [official implementation](https://github.com/dqxiu/KAssess
 
 ## How to use?
 
-First, create a new virtual environment then install **minkarr** using the command:
+First, create a new virtual environment, then install [Pytorch-CUDA](https://pytorch.org/get-started/locally/), and finally install **minkarr** using the command:
 
 ```bash
-pip install minkarr --extra-index-url https://download.pytorch.org/whl/cu121
+pip install minkarr
 ```
 
 Here is a simple example of **how to quantify the knowledge of a fact by an LLM using KaRR**
 ```python
-from karr import KaRR
+from minkarr import KaRR
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-model_name = 'gpt2'
-device = 'cuda'
-model = AutoModelForCausalLM.from_pretrained(model_name, device_map = device)
+model_name = "gpt2"
+device = "cuda"
+model = AutoModelForCausalLM.from_pretrained(model_name).cuda()
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 
 karr = KaRR(model, tokenizer, device)
 
 # Testing the fact: (France, capital, Paris)
 # You can find other facts by looking into Wikidata
-fact = ('Q142', 'P36', 'Q90')
+fact = ("Q142", "P36", "Q90")
 
 karr, does_know = karr.compute(fact)
-print('Fact %s' % str(fact))
-print('KaRR = %s' % karr)
-ans = 'Yes' if does_know else 'No'
-print('According to KaRR, does the model knows this fact? Answer: %s' % ans)
+print("Fact %s" % str(fact))
+print("KaRR = %s" % karr)
+ans = "Yes" if does_know else "No"
+print("According to KaRR, does the model knows this fact? Answer: %s" % ans)
 # Output:
 # KaRR = 3.338972442145268
 # According to KaRR, does the model knows this fact? Answer: No
