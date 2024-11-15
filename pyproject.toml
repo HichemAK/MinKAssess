@@ -1,16 +1,16 @@
 [project]
 name = "minkarr"
-version = "0.1.1"
+version = "0.1.4"
 description = "A minimal implementation of KaRR knowledge assessment method for Large Language Models (LLMs)"
 authors = [
     { name = "Hichem Ammar Khodja", email = "hichem.ammarkhodja@orange.com" }
 ]
 dependencies = [
-    "torch==2.5.0+cu121",
     "transformers>=4.46.0",
     "jsonlines>=4.0.0",
     "nltk>=3.9.1",
     "wikidataintegrator>=0.9.30",
+    "setuptools>=70.0.0",
 ]
 readme = "README.md"
 requires-python = ">= 3.8"
@@ -23,6 +23,7 @@ build-backend = "hatchling.build"
 managed = true
 dev-dependencies = [
     "black>=24.10.0",
+    "torch>=2.0.0",
 ]
 
 [tool.hatch.metadata]
