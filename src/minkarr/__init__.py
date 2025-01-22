@@ -37,7 +37,7 @@ import nltk
 import math
 from tqdm import tqdm
 
-from .globs import PROJECT_PATH
+from .globs import STORAGE_FOLDER
 from minkarr.utils import download_and_unzip, load_json
 
 try:
@@ -486,11 +486,11 @@ def load_model(model_name, device="cuda"):
 
         if "7b" or "13b" in model_name:
             tokenizer = AutoTokenizer.from_pretrained(
-                "{}pretrained_models/{}".format(PROJECT_PATH, model_name),
+                "{}pretrained_models/{}".format(STORAGE_FOLDER, model_name),
                 use_fast=False,
             )
             model = LlamaForCausalLM.from_pretrained(
-                "{}pretrained_models/{}".format(PROJECT_PATH, model_name),
+                "{}pretrained_models/{}".format(STORAGE_FOLDER, model_name),
                 torch_dtype=torch.float16,
                 device_map="auto",
                 low_cpu_mem_usage=True,
@@ -547,7 +547,7 @@ def setup_data_folder() -> None:
     print("Setup KaRR...")
     # URL of the zip file to download
     # Ensure the 'data' directory exists
-    data_path = osp.join(PROJECT_PATH, "data")
+    data_path = osp.join(STORAGE_FOLDER, "data")
     if not osp.exists(data_path):
         os.makedirs(data_path)
     else:
@@ -675,7 +675,7 @@ class KaRR:
     def _load_data(self):
         setup_data_folder()
         print("⏰ Loading data....")
-        rootdir = f"{PROJECT_PATH}/data/my_TREx_main_new"
+        rootdir = f"{STORAGE_FOLDER}/data/my_TREx_main_new"
         model_name_replaced = self.model_name_replaced
 
         all_trex = []
@@ -688,33 +688,33 @@ class KaRR:
                     all_trex.append(obj)
 
         with open(
-            f"{PROJECT_PATH}/data/cleaned_T_REx/rel2sub2rate.json", "r"
+            f"{STORAGE_FOLDER}/data/cleaned_T_REx/rel2sub2rate.json", "r"
         ) as load_f:
             rel2sub2rate = json.load(load_f)
         if "gpt2" in model_name_replaced:
             vocab_path = (
-                f"{PROJECT_PATH}/data/cleaned_T_REx/obj2alias_for_gpt2_vocab.json"
+                f"{STORAGE_FOLDER}/data/cleaned_T_REx/obj2alias_for_gpt2_vocab.json"
             )
         elif "t5" in model_name_replaced:
             vocab_path = (
-                f"{PROJECT_PATH}/data/cleaned_T_REx/obj2alias_for_t5-large_vocab.json"
+                f"{STORAGE_FOLDER}/data/cleaned_T_REx/obj2alias_for_t5-large_vocab.json"
             )
         elif "bloom" in model_name_replaced:
-            vocab_path = f"{PROJECT_PATH}/data/cleaned_T_REx/obj2alias_for_bigscience_bloom-560m_vocab.json"
+            vocab_path = f"{STORAGE_FOLDER}/data/cleaned_T_REx/obj2alias_for_bigscience_bloom-560m_vocab.json"
         elif "opt" in model_name_replaced:
-            vocab_path = f"{PROJECT_PATH}/data/cleaned_T_REx/obj2alias_for_facebook_opt-125m_vocab.json"
+            vocab_path = f"{STORAGE_FOLDER}/data/cleaned_T_REx/obj2alias_for_facebook_opt-125m_vocab.json"
         elif (
             "llama" in model_name_replaced
             or "alpaca" in model_name_replaced
             or "vicuna" in model_name_replaced
         ):
-            vocab_path = f"{PROJECT_PATH}/data/cleaned_T_REx/obj2alias_for_decapoda-research_llama-7b-hf_vocab.json"
+            vocab_path = f"{STORAGE_FOLDER}/data/cleaned_T_REx/obj2alias_for_decapoda-research_llama-7b-hf_vocab.json"
         elif "glm" in model_name_replaced or "moss" in model_name_replaced:
             vocab_path = (
-                f"{PROJECT_PATH}/data/cleaned_T_REx/obj2alias_for_glm_vocab.json"
+                f"{STORAGE_FOLDER}/data/cleaned_T_REx/obj2alias_for_glm_vocab.json"
             )
         else:
-            vocab_path = f"{PROJECT_PATH}/data/cleaned_T_REx/obj2alias_for_{model_name_replaced}_vocab.json"
+            vocab_path = f"{STORAGE_FOLDER}/data/cleaned_T_REx/obj2alias_for_{model_name_replaced}_vocab.json"
 
         if not os.path.exists(vocab_path):
             self._generate_alias()
@@ -727,20 +727,20 @@ class KaRR:
                     cur_obj_aliases[obj_alias_id] = cur_obj_aliases[
                         obj_alias_id
                     ].lower()
-        sub2alias = load_json(f"{PROJECT_PATH}/data/cleaned_T_REx/allsub2alias.json")
-        obj2rel2rate = load_json(f"{PROJECT_PATH}/data/cleaned_T_REx/obj2rel2rate.json")
+        sub2alias = load_json(f"{STORAGE_FOLDER}/data/cleaned_T_REx/allsub2alias.json")
+        obj2rel2rate = load_json(f"{STORAGE_FOLDER}/data/cleaned_T_REx/obj2rel2rate.json")
         # rel alias filter
-        rel2alias = load_json(f"{PROJECT_PATH}/data/relation2template.json")
+        rel2alias = load_json(f"{STORAGE_FOLDER}/data/relation2template.json")
         print("😄 All data loaded.\n")
         return all_trex, sub2alias, rel2alias, obj2alias, obj2rel2rate, rel2sub2rate
 
     def _generate_alias(self, verbose=0) -> None:
-        save_path = f"{PROJECT_PATH}/data/cleaned_T_REx/obj2alias_for_{self.model_name_replaced}_vocab.json"
+        save_path = f"{STORAGE_FOLDER}/data/cleaned_T_REx/obj2alias_for_{self.model_name_replaced}_vocab.json"
         if osp.exists(save_path):
             print("Aliases already generated for %s!" % self.model_name)
 
         with open(
-            f"{PROJECT_PATH}/data/cleaned_T_REx/allobj2alias.json", "r"
+            f"{STORAGE_FOLDER}/data/cleaned_T_REx/allobj2alias.json", "r"
         ) as load_f:
             obj2alias = json.load(load_f)
 

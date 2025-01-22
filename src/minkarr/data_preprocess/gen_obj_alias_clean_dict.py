@@ -16,7 +16,7 @@ from transformers import GPT2Tokenizer, LlamaTokenizer
 
 from transformers import AutoTokenizer
 
-from minkarr.globs import PROJECT_PATH
+from minkarr.globs import STORAGE_FOLDER
 
 
 def judge_obj_in_vocab(tokenizer, obj_label, obj_ids, verbose=0):
@@ -82,7 +82,7 @@ if __name__ == "__main__":
             model_name, padding_side="left", trust_remote_code=True
         )
         with open(
-            f"{PROJECT_PATH}/data/cleaned_T_REx/allobj2alias.json", "r"
+            f"{STORAGE_FOLDER}/data/cleaned_T_REx/allobj2alias.json", "r"
         ) as load_f:
             obj2alias = json.load(load_f)
 
@@ -106,7 +106,7 @@ if __name__ == "__main__":
                     )
         model_name_replaced = model_name.replace("/", "_")
         with open(
-            f"{PROJECT_PATH}/data/cleaned_T_REx/obj2alias_for_{model_name_replaced}_vocab.json",
+            f"{STORAGE_FOLDER}/data/cleaned_T_REx/obj2alias_for_{model_name_replaced}_vocab.json",
             "w",
         ) as write_f:
             json.dump(save_dict, write_f, indent=4, ensure_ascii=False)
