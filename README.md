@@ -48,6 +48,10 @@ print("According to KaRR, does the model knows this fact? Answer: %s" % ans)
 - Minimalistic implementation: I kept only the portion of the code needed to compute KaRR and removed the rest
 - This implementation can compute KaRR on a single fact (the original implementation went through all facts)
 
+## Change storage location
+
+Set the environment variable `STORAGE_FOLDER` to choose where to store the data that MinKaRR downloads.
+
 ## Citation
 Cite the original authors using:
 ```
