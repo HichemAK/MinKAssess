@@ -63,5 +63,6 @@ Cite the original authors using:
 }
 ```
 
+## Credits
 
-
+In addition to the paper's implementation, this work is based on the KaRR implementation by Orange in this [repository](https://github.com/Orange-OpenSource/DistFactAssessLM/tree/94c7c8cd8f844d6e2efc045be699a2dded533150/src/know/MinKAssess).
